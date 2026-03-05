@@ -1,5 +1,5 @@
 /.venv
-/_pycache__
+/__pycache__
 /dataset/BookReviewsDatasetForABSA
 _init_.py
 dataset
