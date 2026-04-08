@@ -12,5 +12,4 @@ router = APIRouter(
 def read_current_user(current_user: models.User = Depends(deps.get_current_user)):
     return current_user
 
-# additional user-related endpoints can be added here
  

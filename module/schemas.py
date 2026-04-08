@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
-# --- user schemas ---
+# user schemas
 class UserBase(BaseModel):
     username: str
 
@@ -16,7 +16,7 @@ class UserOut(UserBase):
     class Config:
         orm_mode = True
 
-# --- category schemas ---
+# category schemas
 class CategoryBase(BaseModel):
     name: str
 
@@ -29,7 +29,7 @@ class CategoryOut(CategoryBase):
     class Config:
         orm_mode = True
 
-# --- book schemas ---
+# book schemas
 class BookBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -46,7 +46,7 @@ class BookOut(BookBase):
     class Config:
         orm_mode = True
 
-# --- like schemas ---
+# like schemas
 class LikeBase(BaseModel):
     user_id: int
     book_id: int
@@ -57,7 +57,7 @@ class LikeOut(LikeBase):
     class Config:
         orm_mode = True
 
-# --- auth schemas ---
+# auth schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
