@@ -1,0 +1,85 @@
+services:
+  db:
+    image: postgres:16
+    container_name: elibrary-db-prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-elibrary_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - db_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - elibrary_prod
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: elibrary-backend-prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      PORT: ${BACKEND_PORT:-8000}
+      CLENT_URL: ${CLENT_URL:-https://elibrary.example.com}
+      CLIENT_URL: ${CLENT_URL:-https://elibrary.example.com}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:change-me@db:5432/elibrary_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - elibrary_prod
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://elibrary.example.com/api}
+    container_name: elibrary-frontend-prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      PORT: ${FRONTEND_PORT:-3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://elibrary.example.com/api}
+    expose:
+      - "3000"
+    networks:
+      - elibrary_prod
+
+  nginx:
+    image: nginx:alpine
+    container_name: elibrary-nginx-prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - elibrary_prod
+
+volumes:
+  db_prod_data:
+
+networks:
+  elibrary_prod:
+    driver: bridge

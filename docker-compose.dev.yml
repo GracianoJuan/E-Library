@@ -1,0 +1,93 @@
+services:
+  db:
+    image: postgres:16
+    container_name: elibrary-db-dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-elibrary_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - db_dev_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - elibrary_dev
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: elibrary-backend-dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      PORT: ${BACKEND_PORT:-8000}
+      CLENT_URL: ${CLENT_URL:-http://localhost:8080}
+      CLIENT_URL: ${CLENT_URL:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@db:5432/elibrary_db}
+    volumes:
+      - ./backend:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - elibrary_dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+    container_name: elibrary-frontend-dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      PORT: ${FRONTEND_PORT:-3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - elibrary_dev
+
+  nginx:
+    image: nginx:alpine
+    container_name: elibrary-nginx-dev
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    networks:
+      - elibrary_dev
+
+volumes:
+  db_dev_data:
+  frontend_node_modules:
+  frontend_next:
+
+networks:
+  elibrary_dev:

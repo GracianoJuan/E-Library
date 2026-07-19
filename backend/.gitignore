@@ -1,0 +1,9 @@
+/.venv
+/__pycache__
+/dataset/BookReviewsDatasetForABSA
+_init_.py
+dataset
+.env
+*.ipynb
+/cbf_old
+sub/results*
