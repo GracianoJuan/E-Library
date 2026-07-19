@@ -190,20 +190,4 @@ If startup fails, check these first:
 
 If the backend cannot connect to the database, confirm that `DATABASE_URL` points at the `db` service hostname and that the Postgres password matches the production env file.
 
-## Files Added For Deployment
 
-- [backend/Dockerfile](backend/Dockerfile)
-- [frontend/Dockerfile](frontend/Dockerfile)
-- [docker-compose.dev.yml](docker-compose.dev.yml)
-- [docker-compose.prod.yml](docker-compose.prod.yml)
-- [nginx.dev.conf](nginx.dev.conf)
-- [nginx.prod.conf](nginx.prod.conf)
-- [.env.dev.example](.env.dev.example)
-- [.env.prod.example](.env.prod.example)
-- [backend/requirements.txt](backend/requirements.txt)
-
-## Notes
-
-- The backend accepts both `CLIENT_URL` and the existing `CLENT_URL` spelling so the deployment works cleanly while preserving backward compatibility.
-- The frontend Docker image uses Next.js standalone output for the optimized production stage.
-- The backend startup script waits for Postgres readiness before running migrations and CSV import, which prevents race conditions during cold starts.
